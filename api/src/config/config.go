@@ -14,6 +14,9 @@ var (
 	StringDBConnection = ""
 	//Port where API will be running
 	Port = 0
+	//Key to sign token
+	SecretKey []byte
+
 )
 
 //Load will init environments
@@ -34,4 +37,6 @@ func Load(){
 		os.Getenv("DB_KEY"),
 		os.Getenv("DB_NAME"),
 	)
+
+	SecretKey = []byte(os.Getenv("SECRET_KEY"))
 }

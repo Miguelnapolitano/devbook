@@ -8,10 +8,9 @@ import (
 	"net/http"
 )
 
-
 func main() {
 	config.Load()
-	
+
 	fmt.Printf("Listening port %d.", config.Port)
 
 	r := router.Generate()
