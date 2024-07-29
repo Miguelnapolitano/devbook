@@ -8,7 +8,6 @@ import (
 	"api/src/responses"
 	"api/src/secure"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 )
@@ -39,19 +38,17 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		responses.Err(w, http.StatusBadRequest, err)
 		return
 	}
-
 	if err := secure.Verify(dbUser.Password, user.Password); err != nil {
 		responses.Err(w, http.StatusUnauthorized, err)
 		return
 	}
-
+	
 	token, err := auth.CreateToken(dbUser.ID)
 	if err != nil {
-			fmt.Println("Erro ao gerar token:", err)
-			return
+		responses.Err(w, http.StatusInternalServerError, err)
+		return
 	}
-
 	
-	fmt.Println("Token gerado:", token)
+	responses.JSON(w, http.StatusOK, token)
 
 }

@@ -166,3 +166,145 @@ func (repo users) FindByEmail(email string) (models.User, error){
 
 	return user, nil
 }
+
+//To an user follow other
+func (repo users) Follow(userID, followerID uint64) error {
+	statement, err := repo.db.Prepare(
+		"insert ignore into followers (user_id, follower_id) values (?, ?)",
+	)
+
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+
+	if _, err := statement.Exec(userID, followerID); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+//To an user unfollow other
+func (repo users) Unfollow(userID, followerID uint64) error {
+	statement, err := repo.db.Prepare(
+		"delete from followers where user_id = ? and follower_id = ?",
+	)
+
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+
+	if _, err := statement.Exec(userID, followerID); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+// all followers from received ID
+func (repo users) Followers(userID uint64) ([]models.User, error) {
+
+	rows, err := repo.db.Query(
+		`select name, nick from users u 
+		 join followers f on f.follower_id = u.id 
+		 where f.user_id = ?`,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(
+			&user.Name,
+			&user.Nick,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+// All following users
+func (repo users) Following(userID uint64) ([]models.User, error) {
+
+	rows, err := repo.db.Query(
+		`select name, nick from users u 
+		 join followers f on f.user_id = u.id 
+		 where f.follower_id = ?`,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(
+			&user.Name,
+			&user.Nick,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+//Gets user password by id
+func (repo users) GetUserPassword(userID uint64) (string, error) {
+	row, err := repo.db.Query("select password from users where id = ?", userID)
+
+	if err != nil {
+		return "", err
+	}
+	defer row.Close()
+
+	var user models.User
+	if row.Next() {
+		if err = row.Scan(&user.Password); err != nil {
+			return "", err
+		}
+	}
+
+	return user.Password, nil
+}
+
+//Updates an user password
+func (repo users) UpdatePassword(userID uint64, password string) error {
+	statement, err := repo.db.Prepare("update users set password = ? where id = ?")
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+	if _, err = statement.Exec(password, userID); err != nil {
+		return err
+	}
+
+	return nil
+}
